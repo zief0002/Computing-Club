@@ -1,0 +1,231 @@
+---
+title: 'Data Preparation II: Filters, Transformations & Summarization using dplyr'
+author: "Ethan Brown"
+date: "10/13/2014"
+output: ioslides_presentation
+---
+## Outline
+
+- Setting up
+- ``magrittr``: Feeding your your data to functions with ``%>%``
+- ``dplyr``: data munging made elegant
+
+
+## Setting up
+We'll be using the same data file as last week.  You can download the file, move to your working directory, and then load in R using:
+
+```{r}
+load("Data_Subs_Merge.RData")
+```
+
+You'll need to install the `dplyr` package, which you can do either through RStudio or directly in R using
+
+```{r, eval = FALSE}
+install.packages("dplyr")
+```
+
+(This will also install `magrittr`)
+
+## Setting up
+
+Then, load `dplyr`, which will also load `magrittr`
+
+```{r, message=FALSE}
+library(dplyr)
+```
+
+# `magrittr`
+
+
+## Doing things in R: traditional way
+
+![myimage](CastOfCharacters.png)
+
+## Doing things in R: traditional
+We can view a summary:
+```{r}
+summary(mydata2)
+```
+
+## Doing things in R: traditional
+Normally, we think of our data as *inside* a function
+```{r, eval=FALSE}
+summary(mydata2)
+```
+![](RobotBox.png)
+
+## Doing things in R: ``%>%``
+
+You can read ``%>%`` as "feeds into".  It's like a conveyor belt, starting with the data. The output is exactly the same as ``summary(mydata2)``.
+
+```{r, eval=FALSE}
+mydata2 %>% summary
+```
+
+![](BoxMagrittr.png)
+
+## Doing MANY things in R: ``%>%``
+
+Now, we can create a flow of commands that is easy to read and write with several ``%>%``s in a row.  The output of the first function in the series is used as the input to the next function.
+
+```{r}
+mydata2 %>% na.omit %>% summary
+```
+
+## Doing MANY things in R: ``%>%``
+
+So, we're feeding into ``na.omit``, and then feeding the output of that into ``summary``.
+
+```{r, eval=FALSE}
+mydata2 %>% na.omit %>% summary
+```
+![](BoxMagrittr2.png)
+
+## Nesting
+We can do the same thing in multiple steps, or by nesting functions inside each other, but it can be harder to read (especially when using ``dplyr``!)
+
+```{r, eval = FALSE}
+summary(na.omit(mydata2))
+```
+
+![](Nested.png)
+
+## Final ``%>%`` tip
+`%>%` always assumes that what comes on the left hand side is the first argument of the function it's feeding into. Additional arguments can also be included in the function.
+
+So, 
+
+```{r, eval = FALSE}
+summary(mydata2, digits = 1)
+```
+
+is the same as
+
+```{r, eval = FALSE}
+mydata2 %>% summary(digits = 1)
+```
+
+# ``dplyr``
+## Why R needs ``dplyr``
+Example dataset
+
+```{r}
+data7
+```
+
+## Why R needs ``dplyr``
+Summarize mean and SD by school and gender. This is pretty clumsy in base R:
+
+```{r}
+aggregate(math.score ~ id.school + gender, data = data7, 
+          FUN = function(x) c(M = mean(x), SD = sd(x)))
+
+```
+
+## Why R needs ``dplyr``
+
+How different is each student from their school & gender mean? Just run some code like this to find out!
+
+```{r, eval = FALSE}
+do.call(rbind, 
+        args = lapply(split(data7, list(data7$gender, data7$id.school)), 
+          FUN = function(x) {
+           x$diff = x$math.score - mean(x$math.score)
+           return(x)
+       }))
+
+```
+
+![](weeping.png)
+
+## 5 ``dplyr`` functions that save the day
+
+- ``arrange()``: A painless way of sorting your data
+- ``filter()``: create subsets 
+- ``group_by()``: tell `dplyr` the variables you want to group by
+- ``summarize()``: create a summary of your dataset (i.e. mean, SD)
+- ``mutate()``: add a new variable
+
+## ``arrange`` your data
+To sort your data, just list the variables in the order you want to sort by (similar to Excel). Say, we want to sort our data for gender and then by math score:
+
+```{r}
+data7 %>% arrange(gender, math.score)
+```
+
+## ``filter``
+
+Select specific rows from your data frame.  To do this, specify logical conditions to filter.
+
+```{r}
+data7 %>% filter(math.score < 600)
+```
+
+
+## ``filter``
+
+You can also filter using multiple conditions:
+
+```{r}
+data7 %>% filter(gender == 1, math.score < 600)
+```
+
+## ``summarize``
+You can easily calculate statistics by specifying new variables with ``summarize``.  For instance, mean and SD:
+
+```{r}
+data7 %>% 
+   summarize(M = mean(math.score),
+             SD = sd(math.score))
+```
+
+## ``group_by`` with ``summarize`` 
+Add a ``group_by`` to the command before summarize to tell ``dplyr`` that you want to summarize by a specific group.
+
+```{r}
+data7 %>% group_by(id.school) %>%                    
+  summarize(M = mean(math.score), SD = sd(math.score))
+```
+
+## ``group_by`` with ``summarize``
+You can use similar code to group by 2 variables:
+```{r}
+data7 %>% group_by(id.school, gender) %>%         
+  summarize(M = mean(math.score),
+            SD = sd(math.score))
+```
+
+## ``mutate``
+Append a new variable to the original dataset with ``mutate``:
+```{r}
+data7 %>% 
+  mutate(M = mean(math.score),
+         SD = sd(math.score))
+```
+
+
+## ``group_by`` with ``mutate``
+Again, add ``group_by`` to specify which variables you'd want ot group by:
+
+```{r}
+data7 %>% group_by(id.school) %>%                   
+  mutate(M = mean(math.score),
+         SD = sd(math.score))
+```
+
+## ``group_by`` with ``mutate``
+
+How different is each student from school & gender mean?
+
+```{r}
+data7 %>% group_by(id.school, gender) %>%                      
+  mutate(M = mean(math.score),
+         diff.from.mean = math.score - M)
+```
+
+## Further reading
+[Hands-on dplyr tutorial for faster data manipulation in R](http://www.dataschool.io/dplyr-tutorial-for-faster-data-manipulation-in-r/)
+```{r, eval = FALSE}
+vignette("magrittr", package = "magrittr")
+vignette("introduction", package = "dplyr")
+```
