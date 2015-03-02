@@ -308,7 +308,9 @@ renderPlot({
 })
 
 ```
+
 ## Fitting a polynomial (code)
+
 ```{r eval = F}
 inputPanel(
   sliderInput("deg", "Polynomial Degree", 1, 10, value = 1)
@@ -372,6 +374,23 @@ ggplot(data = diamonds2, aes(x = price)) +
 - Widgets for inputting data
 - Custom themes
 - Pretty elaborate fancyness
+
+## Table code
+```{r eval = F}
+
+sidebarPanel(
+  checkboxGroupInput('show_vars', 'Columns in diamonds to show:',
+                     c("carat", "x", "price"),
+                       selected = c("carat", "x", "price"))
+  )
+
+renderDataTable({
+  diamonds2[, input$show_vars, drop = FALSE]
+  },
+  options = list(pageLength = 5)
+  )
+
+```
 
 ## Table output
 
