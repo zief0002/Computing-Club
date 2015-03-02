@@ -1,10 +1,11 @@
 ---
-title: 'Don''t start from scratch: Interacting with your graphics'
+title: "Don't Start from Scratch: Interact with your Graphics"
 author: "Ethan Brown"
-date: "Sunday, February 22, 2015"
+date: "Monday, March 02, 2015"
 output: ioslides_presentation
 runtime: shiny
 ---
+
 
 ## Why interactive graphics?
 - Want to tweak just a small range of parameters
@@ -35,7 +36,7 @@ ggplot(data = diamonds2, aes(x = price)) +
 
 It comes with RStudio! So all we need to do is:
 
-```{r message=FALSE}
+```{r message=FALSE, warning=FALSE}
 library(manipulate)
 ```
 
@@ -415,6 +416,10 @@ renderDataTable({
 - [Interactive Plotting with `manipulate`](https://support.rstudio.com/hc/en-us/articles/200551906-Interactive-Plotting-with-Manipulate)
 - [R Studio guide to Shiny and R Markdown](http://rmarkdown.rstudio.com/authoring_shiny.html)
 - [Official shiny documentation](http://shiny.rstudio.com/tutorial/)---advanced users only!
+
+Another option:
+
+- [Plotly for ggplot2](https://plot.ly/ggplot2/getting-started/)
 
 
 
