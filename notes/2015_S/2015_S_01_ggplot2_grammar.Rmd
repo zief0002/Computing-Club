@@ -1,0 +1,167 @@
+---
+title: "Flexible, Beautiful, Customizable Graphs"
+subtitle:  "Understanding ggplot2's Grammar"
+author: "Kyle Nickodem"
+date: "Monday, February 2nd, 2015"
+output: ioslides_presentation
+---
+
+## Take Home Points
+
+1. Become aware of the various components that comprise a graph
+2. Understand how ggplot2 uses these components to construct a plot
+
+## What is this graphic trying to tell us?
+![Imgur](http://i.imgur.com/q5UAEV2.png)
+
+
+## The Grammar of Graphics
+Why is it necessary to understand the grammar?
+
+1. ggplot2 operates using this grammar
+2. It provides us with a process to think about the structure that underlies statistical grapics
+
+##
+![Imgur](http://i.imgur.com/aLOMwJ0.png)
+
+- Data and asthetic mapping
+- Geometric objects
+- Scales and coordinate system
+- Plot annotations and themes
+
+##
+![Imgur](http://i.imgur.com/IDAnlcF.png)
+
+## How does this work in ggplot2?
+
+```{r}
+library(ggplot2)
+head(diamonds)
+```
+
+
+##
+```{r}
+ggplot(data=diamonds, aes(x = x, y = carat)) +
+  geom_point()
+```
+
+##
+```{r, eval=FALSE}
+ggplot(data=diamonds, aes(x = x, y = carat)) +
+  geom_point()
+```
+
+```{r, eval=FALSE}
+ggplot() +
+  layer(data = diamonds, mapping = aes(x = x, y = carat), 
+                 geom = "point", stat = "identity", pos = "identity") + 
+  scale_x_continuous() + 
+  scale_y_continuous() + 
+  coord_cartesian() +
+  theme()
+```
+
+```{r, eval=FALSE}
+ggplot(diamonds, aes(x,carat)) +
+  geom_point()
+```
+
+## Quiz Time
+What will this plot look like?
+
+```{r, eval=FALSE}
+ggplot(data = economics, aes(x = date, y = pop)) + 
+  geom_line()
+```
+
+##
+```{r}
+ggplot(data = economics, aes(x = date, y = pop)) + 
+  geom_line()
+```
+
+## Question #2
+
+```{r, eval=FALSE}
+ggplot(data = diamonds, aes(x = price)) + 
+  geom_histogram()
+
+```
+
+##
+```{r, message=FALSE}
+ggplot(data = diamonds, aes(x = price)) + 
+  geom_histogram()
+
+```
+
+## Add multiple geometric objects
+```{r, message=FALSE}
+ggplot(data = diamonds, aes(x = price)) + 
+  geom_histogram(aes(y = ..density..)) + geom_density(color = "red")
+
+```
+
+
+## Frequency of diamond clarity by cut?
+```{r}
+ggplot(data=diamonds, aes(x = clarity, fill = cut)) +
+  geom_bar()
+```
+
+## Change color scheme
+```{r}
+library(RColorBrewer)
+ggplot(data=diamonds, aes(x = clarity, fill = cut)) +
+  geom_bar() + scale_fill_brewer()
+```
+
+## Flip the coordinate grid
+```{r}
+ggplot(data=diamonds, aes(x = clarity, fill = cut)) +
+  geom_bar() + scale_fill_brewer() + 
+  coord_flip()
+```
+
+## Dodged bar chart
+```{r}
+ggplot(data=diamonds, aes(x = clarity, fill = cut)) +
+  geom_bar(position = "dodge") + scale_fill_brewer()
+```
+
+## Facet
+```{r}
+ggplot(data=diamonds, aes(x = clarity, fill = cut)) +
+  geom_bar() + scale_fill_brewer() + facet_wrap(~cut)
+```
+
+## Alter the theme
+```{r}
+ggplot(data=diamonds, aes(x = clarity, fill = cut)) +
+  geom_bar() + scale_fill_brewer() +  facet_wrap(~cut) + theme_bw()
+```
+
+
+## Resources
+- Hadley's ggplot2 documentation - [docs.ggplot2.org](http://docs.ggplot2.org/current/)
+- [ZevRoss ggplot2 cheatsheet](http://zevross.com/blog/2014/08/04/beautiful-plotting-in-r-a-ggplot2-cheatsheet-3/)
+- [R Graphics Cookbook](http://www.cookbook-r.com/Graphs/)
+- [R Color Brewer](http://colorbrewer2.org/)
+- Wilkinson, L. (2006). *The grammar of graphics*. Springer - Available for free from through the UM Library portal.
+
+## Hadley's favorite pie chart
+```{r, echo=FALSE}
+df <- data.frame(
+  variable = c("resembles", "does not resemble"),
+  value = c(80, 20)
+)
+```
+
+```{r}
+ggplot(df, aes(x = "", y = value, fill = variable)) + geom_bar(width = 1,
+stat = "identity") + scale_fill_manual(values = c("red", "yellow")) +
+  coord_polar("y", start = pi / 3) + labs(title = "Pac man")
+```
+
+

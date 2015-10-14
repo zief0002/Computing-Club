@@ -1,0 +1,202 @@
+reshaping
+========================================================
+author: Erik Anderson
+date: 2014.10.27
+css: tweaks.css
+```{r}
+
+```
+
+Setting Up
+========================================================
+```{r, eval=FALSE}
+install.packages("tidyr")
+library(tidyr)
+# load(url("https://github.com/zief0002/Computing-Club/raw/master/data/heights.RData"))
+```
+```{r, echo=FALSE}
+library(dplyr)
+library(tidyr)
+# load(url("https://github.com/zief0002/Computing-Club/raw/master/data/heights.RData"))
+```
+
+
+Data!
+========================================================
+![Francis Galton Notebook Heights Table](francis_galton_notebook.jpg)
+
+Imported into R
+========================================================
+class: small-code
+```{r, echo=FALSE}
+# splitHeights = data.frame(Family_Id = seq(1,5),
+#                      Father = c(18.5, 15.5, 15.0, 15.0, 15.0),
+#                      Mother = c(7.0, 6.5, 4.0, 4.0, -1.5),
+#                      Son_1 = c(13.2, 13.5, 11.0, 10.5, 12.0),
+#                      Son_2 = c(NA, 12.5, NA, 8.5, 9.0),
+#                      Son_3 = c(NA, NA, NA, NA, 8.0),
+#                      Daughter_1 = c(9.2, 5.5, 8.0, 7.0, 6.5),
+#                      Daughter_2 = c(9.0, 5.5, NA, 4.5, 2.5),
+#                      Daughter_3 = c(9.0, NA, NA, 3.0, 2.5))
+galtonHeights = data.frame(Family_Id = seq(1,5),
+                     Father = c(18.5, 15.5, 15.0, 15.0, 15.0),
+                     Mother = c(7.0, 6.5, 4.0, 4.0, -1.5),
+                     RankedSons = c("13.2, , ", "13.5, 12.5, ", "11.0, , ", "10.5, 8.5, ", "12.0, 9.0, 8.0"),
+                     RankedDaughters = c("9.2, 9.0, 9.0", "5.5, 5.5, ", "8.0, , ", "7.0, 4.5, 3.0", "6.5, 2.5, 2.5"))
+```
+<small>
+```{r}
+galtonHeights
+```
+</small>
+
+
+What is the case?
+========================================================
+![Francis Galton Notebook Heights Table](francis_galton_notebook.jpg)
+
+"Long" vs "short"
+========================================================
+("unstacked"/"flat"/"wide"/" versus "stacked"/"tall"/"narrow"/"skinny")
+
+<table style="border-style: none;">
+<tr><td>
+<table>
+<tr><th>Name</th><th>Height</th><th>Weight</th></tr>
+<tr><td>Alice</td><td>61.3</td><td>160.9</td></tr>
+<tr><td>Bob</td><td>68.6</td><td>184.0</td></tr>
+<tr><td>Carol</td><td>64.1</td><td>168.7</td></tr>
+</table></td><td><table>
+<tr><th>Name</th><th>Variable</th><th>Value</th></tr>
+<tr><td>Alice</td><td>Height</td><td>61.3</td></tr>
+<tr><td>Alice</td><td>Wight</td><td>160.9</td></tr>
+<tr><td>Bob</td><td>Height</td><td>68.6</td></tr>
+<tr><td>Bob</td><td>Wight</td><td>184.0</td></tr>
+<tr><td>Carol</td><td>Height</td><td>64.1</td></tr>
+<tr><td>Carol</td><td>Wight</td><td>168.7</td></tr>
+</table></td></tr>
+</table>
+
+Why is this important?
+========================================================
+* Graphing
+* Modeling
+* General calculations
+
+Transforming from one format to the other
+========================================================
+* reshape2 package
+* tidyr package:
+  * gather() - multiple columns to key-value pairs ("short->long")
+  * spread() - key-value pair columns to multiple columns ("long->short")
+  * separate() - split single column
+  * unite() - join columns together
+
+Separate
+========================================================
+class: small-code
+Use separate() when you have columns that have more than one variable in each cell.
+```{r}
+separatedHeights = 
+  galtonHeights %>%
+  separate(RankedSons, into = paste("Son", seq(1,3), sep="_"), ",") %>%
+  separate(RankedDaughters, into = paste("Daughter", seq(1,3), sep="_"), ",")
+separatedHeights
+```
+
+Gather
+========================================================
+class: small-code
+Use gather() when you have columns that aren't variables.
+```{r}
+gatheredHeights = separatedHeights %>%
+  gather(Relation, ChildHeight, Son_1:Daughter_3) %>%
+  separate(Relation, into = c("Relation", "GenderRank"), "_") %>%
+  select(-GenderRank)
+gatheredHeights
+```
+
+Cleanup time!
+========================================================
+class: small-code
+Cleaning data is often easier with long data.
+```{r}
+getHeight = function(x) { as.numeric(x) + 60 }
+cleanedHeights = gatheredHeights %>%
+  mutate(ChildGender = ifelse(Relation == "Son", "M", "F"),
+         Father = getHeight(Father),
+         Mother = getHeight(Mother),
+         ChildHeight = getHeight(ChildHeight)) %>%
+  filter(!is.na(ChildHeight)) %>%
+  group_by(Family_Id) %>%
+  mutate(Rank = as.integer(rank(desc(ChildHeight), ties.method = "first"))) %>%
+  ungroup() %>%
+  select(-Relation)
+cleanedHeights
+```
+
+Spread
+========================================================
+class: small-code
+Use Spread() when you have a column with different variables in different rows.
+```{r}
+spreadHeights = cleanedHeights %>%
+  spread(Rank, ChildHeight)
+spreadHeights
+```
+
+Unite
+========================================================
+class: small-code
+Use Unite() when you have a column that isn't a complete variable.
+```{r}
+unitedHeights = spreadHeights %>%
+  unite(ChildHeights, 5:10, sep=",")
+unitedHeights
+```
+
+A few words about (de)Normalization
+========================================================
+* Benefits for both wide and narrow formats.
+* Easy to convert between them.
+* Consider your "base" format
+* Make life easy on yourself
+
+A word about (de)Normalization
+========================================================
+* What if we added to our data? such as
+  * Name
+  * Age
+  * Weight
+* This would be stored redundantly for parents of multiple children
+* We could move data on individuals to a separate table
+
+Normalized Tables
+========================================================
+* People(Id, Weight, Sex)
+* Heredity(MaleId, FemaleId, ChildId)
+
+One last tip: Renaming Columns
+========================================================
+A common task with an easy solution.
+```{r, eval=FALSE}
+# usually something like this:
+names(heights)[[2]] = "Dad"; # not particularly robust
+```
+```{r, eval=FALSE}
+# or this:
+heights$Dad = heights$Father # not particularly efficient
+heights$Father = NULL
+```
+```{r, eval=TRUE}
+# with dplyr:
+rename(heights, Dad = Father)
+```
+
+Read more
+========================================================
+http://cran.r-project.org/web/packages/tidyr/index.html
+```{r, eval=FALSE}
+vignette("tidy-data", "tidyr")
+```
+
